@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HOUSE MUSIC</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;600;700&display=swap');
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --neon-pink: #ff2d78;
+      --neon-cyan: #00f5ff;
+      --neon-purple: #b400ff;
+      --neon-yellow: #ffe600;
+      --dark: #0a0a0f;
+      --dark2: #12121a;
+      --card: #1a1a28;
+    }
+
+    html, body {
+      width: 100%; height: 100%;
+      background: var(--dark);
+      overflow: hidden;
+      font-family: 'Inter', sans-serif;
+      color: #fff;
+      user-select: none;
+    }
+
+    /* ── GRID BG ── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        linear-gradient(rgba(0,245,255,.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,245,255,.04) 1px, transparent 1px);
+      background-size: 48px 48px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── SLIDES ── */
+    #slideshow {
+      position: relative;
+      width: 100vw; height: 100vh;
+      z-index: 1;
+    }
+
+    .slide {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 40px 60px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .5s ease, transform .5s ease;
+      transform: translateX(60px);
+    }
+    .slide.active {
+      opacity: 1; pointer-events: all; transform: translateX(0);
+    }
+    .slide.exit-left  { opacity: 0; transform: translateX(-60px); }
+    .slide.exit-right { opacity: 0; transform: translateX(60px); }
+
+    /* ── NAV ARROWS ── */
+    .nav-arrow {
+      position: fixed; top: 50%; transform: translateY(-50%);
+      background: transparent; border: none; cursor: pointer;
+      z-index: 10; padding: 12px;
+      transition: opacity .2s;
+    }
+    .nav-arrow:hover { opacity: .7; }
+    #prev-btn { left: 20px; }
+    #next-btn { right: 20px; }
+    .nav-arrow svg { display: block; }
+
+    /* ── PROGRESS DOTS ── */
+    #dots {
+      position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
+      display: flex; gap: 10px; z-index: 10;
+    }
+    .dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: rgba(255,255,255,.25);
+      transition: background .3s, transform .3s;
+      cursor: pointer;
+    }
+    .dot.active { background: var(--neon-cyan); transform: scale(1.4); }
+
+    /* ── SLIDE NUMBERS ── */
+    #slide-counter {
+      position: fixed; top: 24px; right: 36px;
+      font-size: 13px; color: rgba(255,255,255,.35);
+      letter-spacing: 2px; z-index: 10;
+      font-family: 'Bebas Neue', sans-serif; font-size: 18px;
+    }
+
+    /* ── KEY HINT ── */
+    #key-hint {
+      position: fixed; bottom: 60px; left: 50%; transform: translateX(-50%);
+      font-size: 11px; color: rgba(255,255,255,.2);
+      letter-spacing: 2px; text-transform: uppercase; z-index: 10;
+    }
+
+    /* ══ TYPOGRAPHY HELPERS ══ */
+    .label {
+      font-size: 11px; letter-spacing: 4px; text-transform: uppercase;
+      color: var(--neon-cyan); margin-bottom: 12px; font-weight: 600;
+    }
+    .title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(56px, 10vw, 120px);
+      line-height: .95;
+      letter-spacing: 2px;
+    }
+    .subtitle {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(32px, 5vw, 64px);
+      letter-spacing: 2px;
+    }
+    .body-text {
+      font-size: clamp(15px, 1.8vw, 19px);
+      line-height: 1.7;
+      color: rgba(255,255,255,.75);
+      max-width: 700px;
+      text-align: center;
+    }
+    .accent { color: var(--neon-pink); }
+    .accent2 { color: var(--neon-cyan); }
+    .accent3 { color: var(--neon-purple); }
+    .accent4 { color: var(--neon-yellow); }
+
+    /* ══ NEON GLOW TITLE ══ */
+    .glow-pink  { text-shadow: 0 0 30px var(--neon-pink), 0 0 80px rgba(255,45,120,.4); }
+    .glow-cyan  { text-shadow: 0 0 30px var(--neon-cyan), 0 0 80px rgba(0,245,255,.4); }
+    .glow-purple{ text-shadow: 0 0 30px var(--neon-purple), 0 0 80px rgba(180,0,255,.4); }
+    .glow-yellow{ text-shadow: 0 0 30px var(--neon-yellow), 0 0 80px rgba(255,230,0,.4); }
+
+    /* ══ PILL TAGS ══ */
+    .tags { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 24px; }
+    .tag {
+      padding: 6px 18px; border-radius: 999px;
+      font-size: 13px; font-weight: 600; letter-spacing: 1px;
+      border: 1px solid; text-transform: uppercase;
+    }
+    .tag-pink   { border-color: var(--neon-pink);   color: var(--neon-pink);   background: rgba(255,45,120,.08); }
+    .tag-cyan   { border-color: var(--neon-cyan);   color: var(--neon-cyan);   background: rgba(0,245,255,.08); }
+    .tag-purple { border-color: var(--neon-purple); color: var(--neon-purple); background: rgba(180,0,255,.08); }
+    .tag-yellow { border-color: var(--neon-yellow); color: var(--neon-yellow); background: rgba(255,230,0,.08); }
+
+    /* ══ CARDS ══ */
+    .cards { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; margin-top: 32px; }
+    .card {
+      background: var(--card);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 16px;
+      padding: 28px 32px;
+      max-width: 220px;
+      text-align: center;
+      transition: transform .2s, border-color .2s;
+    }
+    .card:hover { transform: translateY(-4px); }
+    .card-icon { font-size: 36px; margin-bottom: 12px; }
+    .card-title { font-size: 14px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
+    .card-desc  { font-size: 13px; color: rgba(255,255,255,.55); line-height: 1.5; }
+    .card-pink   { border-color: rgba(255,45,120,.3); }
+    .card-cyan   { border-color: rgba(0,245,255,.3); }
+    .card-purple { border-color: rgba(180,0,255,.3); }
+    .card-yellow { border-color: rgba(255,230,0,.3); }
+
+    /* ══ BPM BADGE ══ */
+    .bpm-badge {
+      display: inline-flex; align-items: center; gap: 10px;
+      border: 2px solid var(--neon-cyan); border-radius: 999px;
+      padding: 10px 28px; margin-top: 28px;
+      font-family: 'Bebas Neue', sans-serif; font-size: 28px;
+      color: var(--neon-cyan); letter-spacing: 3px;
+    }
+    .bpm-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: var(--neon-cyan);
+      animation: pulse 0.5s infinite alternate;
+    }
+    @keyframes pulse { from { opacity: 1; } to { opacity: .2; } }
+
+    /* ══ AUDIO PLAYER ══ */
+    .player-wrap {
+      width: 100%; max-width: 560px;
+      margin-top: 36px;
+    }
+    .player {
+      background: var(--card);
+      border-radius: 20px;
+      padding: 28px 32px;
+      border: 1px solid rgba(255,255,255,.1);
+    }
+    .player-top {
+      display: flex; align-items: center; gap: 20px; margin-bottom: 24px;
+    }
+    .play-btn {
+      width: 56px; height: 56px; border-radius: 50%; border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; flex-shrink: 0;
+      transition: transform .15s, box-shadow .15s;
+    }
+    .play-btn:hover { transform: scale(1.08); }
+    .play-btn:active { transform: scale(.95); }
+
+    .player-pink   .play-btn { background: var(--neon-pink);   box-shadow: 0 0 20px rgba(255,45,120,.5); }
+    .player-cyan   .play-btn { background: var(--neon-cyan);   box-shadow: 0 0 20px rgba(0,245,255,.5); color: #000; }
+    .player-purple .play-btn { background: var(--neon-purple); box-shadow: 0 0 20px rgba(180,0,255,.5); }
+    .player-yellow .play-btn { background: var(--neon-yellow); box-shadow: 0 0 20px rgba(255,230,0,.5);  color: #000; }
+
+    .player-info { flex: 1; }
+    .player-name { font-weight: 700; font-size: 16px; letter-spacing: .5px; margin-bottom: 3px; }
+    .player-time { font-size: 12px; color: rgba(255,255,255,.4); letter-spacing: 1px; }
+
+    /* waveform / progress bar */
+    .progress-wrap {
+      position: relative; height: 6px; border-radius: 3px;
+      background: rgba(255,255,255,.1); cursor: pointer; margin-bottom: 10px;
+    }
+    .progress-fill {
+      height: 100%; border-radius: 3px; width: 0%;
+      transition: width .1s linear;
+    }
+    .player-pink   .progress-fill { background: var(--neon-pink); }
+    .player-cyan   .progress-fill { background: var(--neon-cyan); }
+    .player-purple .progress-fill { background: var(--neon-purple); }
+    .player-yellow .progress-fill { background: var(--neon-yellow); }
+
+    .progress-thumb {
+      position: absolute; top: 50%; transform: translate(-50%, -50%);
+      width: 14px; height: 14px; border-radius: 50%; left: 0%;
+      transition: left .1s linear;
+    }
+    .player-pink   .progress-thumb { background: var(--neon-pink); box-shadow: 0 0 8px var(--neon-pink); }
+    .player-cyan   .progress-thumb { background: var(--neon-cyan); box-shadow: 0 0 8px var(--neon-cyan); }
+    .player-purple .progress-thumb { background: var(--neon-purple); box-shadow: 0 0 8px var(--neon-purple); }
+    .player-yellow .progress-thumb { background: var(--neon-yellow); box-shadow: 0 0 8px var(--neon-yellow); }
+
+    .loop-btn {
+      background: transparent; border: none; cursor: pointer;
+      font-size: 13px; color: rgba(255,255,255,.35); letter-spacing: 1px;
+      text-transform: uppercase; transition: color .2s;
+      padding: 0; font-family: 'Inter', sans-serif;
+    }
+    .loop-btn.on { color: var(--neon-cyan); }
+
+    /* ══ EQUALIZER BARS (decorative) ══ */
+    .eq-bars {
+      display: flex; align-items: flex-end; gap: 4px; height: 40px;
+      margin-top: 6px;
+    }
+    .eq-bar {
+      width: 4px; border-radius: 2px;
+      background: rgba(255,255,255,.12);
+      animation: none;
+    }
+    .playing .eq-bar {
+      animation: eq-bounce var(--dur, .4s) ease-in-out infinite alternate;
+    }
+    @keyframes eq-bounce {
+      from { height: var(--min, 4px); }
+      to   { height: var(--max, 30px); }
+    }
+
+    /* ══ SLIDE 1 – HERO ══ */
+    #slide-1 { text-align: center; }
+    .hero-sub {
+      font-size: clamp(14px, 2vw, 18px);
+      letter-spacing: 6px; text-transform: uppercase;
+      color: rgba(255,255,255,.45); margin-top: 16px;
+    }
+
+    /* ══ SLIDE 3 – TIMELINE ══ */
+    .timeline { margin-top: 32px; display: flex; flex-direction: column; gap: 0; width: 100%; max-width: 620px; }
+    .tl-item {
+      display: flex; gap: 20px; align-items: flex-start; position: relative;
+    }
+    .tl-item::before {
+      content: ''; position: absolute; left: 29px; top: 36px;
+      width: 2px; height: calc(100% + 4px); background: rgba(255,255,255,.08);
+    }
+    .tl-item:last-child::before { display: none; }
+    .tl-year {
+      font-family: 'Bebas Neue', sans-serif; font-size: 22px;
+      color: var(--neon-pink); min-width: 60px; padding-top: 8px;
+    }
+    .tl-dot {
+      width: 12px; height: 12px; border-radius: 50%;
+      background: var(--neon-cyan); margin-top: 12px;
+      flex-shrink: 0; box-shadow: 0 0 8px var(--neon-cyan);
+    }
+    .tl-text { padding: 8px 0 20px; }
+    .tl-text strong { display: block; font-size: 15px; margin-bottom: 3px; color: #fff; }
+    .tl-text span { font-size: 13px; color: rgba(255,255,255,.5); line-height: 1.5; }
+
+    /* ══ SLIDE 5 – STYLES ══ */
+    .styles-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 28px; width: 100%; max-width: 780px; }
+    .style-card {
+      background: var(--card); border-radius: 14px; padding: 20px;
+      border: 1px solid rgba(255,255,255,.07);
+      transition: transform .2s;
+    }
+    .style-card:hover { transform: translateY(-3px); }
+    .style-name { font-weight: 700; font-size: 14px; letter-spacing: .5px; margin-bottom: 6px; }
+    .style-desc { font-size: 12px; color: rgba(255,255,255,.5); line-height: 1.5; }
+    .style-bpm  { font-size: 11px; margin-top: 8px; letter-spacing: 1px; text-transform: uppercase; }
+
+    /* ══ OUTRO ══ */
+    #slide-9 { text-align: center; }
+    .big-emoji { font-size: 72px; margin-bottom: 16px; }
+  </style>
+</head>
+<body>
+
+<div id="slideshow">
+
+  <!-- ══ SLIDE 1: HERO ══ -->
+  <div class="slide active" id="slide-1">
+    <div class="label">A journey through</div>
+    <div class="title glow-pink">HOUSE<br><span style="color:var(--neon-cyan);" class="glow-cyan">MUSIC</span></div>
+    <p class="hero-sub">Chicago · 1980s → Forever</p>
+    <div class="tags" style="margin-top:32px;">
+      <span class="tag tag-pink">4/4 Beat</span>
+      <span class="tag tag-cyan">120–130 BPM</span>
+      <span class="tag tag-purple">Soulful</span>
+      <span class="tag tag-yellow">Electronic</span>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 2: WHAT IS HOUSE? ══ -->
+  <div class="slide" id="slide-2">
+    <div class="label">Chapter 01</div>
+    <div class="subtitle glow-cyan">What Is <span class="accent">House?</span></div>
+    <p class="body-text" style="margin-top:24px;">
+      House music is an <span class="accent2">electronic dance genre</span> born in Chicago's underground clubs.
+      It fuses the soul of disco, the groove of funk, and the pulse of synthesizers into one
+      unstoppable four-on-the-floor format.
+    </p>
+    <p class="body-text" style="margin-top:16px;">
+      The name comes from the Warehouse, a legendary Chicago club where DJ Frankie Knuckles
+      spun records in the early 1980s. <span class="accent">The music that played there became known as "house."</span>
+    </p>
+    <div class="bpm-badge">
+      <div class="bpm-dot"></div>
+      120 – 130 BPM
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 3: HISTORY ══ -->
+  <div class="slide" id="slide-3">
+    <div class="label">Chapter 02</div>
+    <div class="subtitle glow-purple">The <span class="accent3">History</span></div>
+    <div class="timeline">
+      <div class="tl-item">
+        <div class="tl-year">1977</div>
+        <div class="tl-dot"></div>
+        <div class="tl-text">
+          <strong>The Warehouse Opens</strong>
+          <span>DJ Frankie Knuckles begins spinning disco and electronic tracks on Chicago's South Side.</span>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-year">1984</div>
+        <div class="tl-dot"></div>
+        <div class="tl-text">
+          <strong>First House Records</strong>
+          <span>Jesse Saunders & Vince Lawrence release "On and On" — widely credited as the first house record.</span>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-year">1987</div>
+        <div class="tl-dot"></div>
+        <div class="tl-text">
+          <strong>House Goes Global</strong>
+          <span>UK embraces house. Acid house explodes with the Roland TB-303 bassline sound.</span>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-year">NOW</div>
+        <div class="tl-dot"></div>
+        <div class="tl-text">
+          <strong>Still Alive</strong>
+          <span>Tech house, afro house, melodic house — the genre keeps evolving, dancefloors keep moving.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 4: THE STRUCTURE ══ -->
+  <div class="slide" id="slide-4">
+    <div class="label">Chapter 03</div>
+    <div class="subtitle glow-yellow">The <span class="accent4">Structure</span></div>
+    <p class="body-text" style="margin-top:20px;">
+      Every house track is built on the same skeleton — four layers stacked on a relentless
+      <span class="accent4">four-on-the-floor</span> grid:
+    </p>
+    <div class="cards" style="margin-top:28px;">
+      <div class="card card-pink">
+        <div class="card-icon">🥁</div>
+        <div class="card-title" style="color:var(--neon-pink);">Kick</div>
+        <div class="card-desc">Hits on every beat. The heartbeat of the track — punchy, deep, relentless.</div>
+      </div>
+      <div class="card card-cyan">
+        <div class="card-icon">🎸</div>
+        <div class="card-title" style="color:var(--neon-cyan);">Bass</div>
+        <div class="card-desc">Synth or 303 bass locks in with the kick. Carries the groove and low-end warmth.</div>
+      </div>
+      <div class="card card-yellow">
+        <div class="card-icon">🎹</div>
+        <div class="card-title" style="color:var(--neon-yellow);">Lead</div>
+        <div class="card-desc">Melody, chords, stabs. The emotional hook that makes you remember the track.</div>
+      </div>
+      <div class="card card-purple">
+        <div class="card-icon">🎵</div>
+        <div class="card-title" style="color:var(--neon-purple);">Full Mix</div>
+        <div class="card-desc">Everything together — the complete house experience from intro to drop.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 5: STYLES ══ -->
+  <div class="slide" id="slide-5">
+    <div class="label">Chapter 04</div>
+    <div class="subtitle glow-pink">Sub-<span class="accent">Styles</span></div>
+    <div class="styles-grid">
+      <div class="style-card">
+        <div class="style-name" style="color:var(--neon-cyan);">Chicago House</div>
+        <div class="style-desc">The original. Soul-drenched vocals, Roland TR-909 drums, raw energy.</div>
+        <div class="style-bpm" style="color:var(--neon-cyan);">120–125 BPM</div>
+      </div>
+      <div class="style-card">
+        <div class="style-name" style="color:var(--neon-pink);">Acid House</div>
+        <div class="style-desc">TB-303 basslines squelching and sliding. Hypnotic, psychedelic, addictive.</div>
+        <div class="style-bpm" style="color:var(--neon-pink);">120–130 BPM</div>
+      </div>
+      <div class="style-card">
+        <div class="style-name" style="color:#00e5aa;">Deep House</div>
+        <div class="style-desc">Slower, soulful, jazzy chords. Late-night introspection on the dancefloor.</div>
+        <div class="style-bpm" style="color:#00e5aa;">116–125 BPM</div>
+      </div>
+      <div class="style-card">
+        <div class="style-name" style="color:var(--neon-purple);">Tech House</div>
+        <div class="style-desc">Minimal, driving, industrial groove. Precision-engineered for peak hour.</div>
+        <div class="style-bpm" style="color:var(--neon-purple);">126–132 BPM</div>
+      </div>
+      <div class="style-card">
+        <div class="style-name" style="color:var(--neon-yellow);">Afro House</div>
+        <div class="style-desc">African percussion and vocals fused with house. Warm, organic, spiritual.</div>
+        <div class="style-bpm" style="color:var(--neon-yellow);">118–126 BPM</div>
+      </div>
+      <div class="style-card">
+        <div class="style-name" style="color:#ff8c00;">Melodic House</div>
+        <div class="style-desc">Cinematic synths, emotional arps, progressive builds. Euphoric journeys.</div>
+        <div class="style-bpm" style="color:#ff8c00;">120–128 BPM</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 6: KICK ══ -->
+  <div class="slide" id="slide-6">
+    <div class="label">Instrument 01</div>
+    <div class="title glow-pink" style="font-size:clamp(64px,12vw,140px);">THE<br>KICK</div>
+    <p class="body-text" style="margin-top:20px;">
+      The <span class="accent">kick drum</span> is the spine of house music. It hits on every quarter note —
+      beat 1, 2, 3, 4 — giving house its signature "four-on-the-floor" pulse.
+      Classic sounds come from the <span class="accent">Roland TR-909</span> or sampled analog kicks.
+    </p>
+    <div class="player-wrap">
+      <div class="player player-pink" id="player-kick">
+        <div class="player-top">
+          <button class="play-btn" onclick="togglePlay('kick')">▶</button>
+          <div class="player-info">
+            <div class="player-name">House Kick</div>
+            <div class="player-time" id="time-kick">0:00 / 0:00</div>
+          </div>
+        </div>
+        <div class="progress-wrap" onclick="seek('kick', event)">
+          <div class="progress-fill" id="fill-kick"></div>
+          <div class="progress-thumb" id="thumb-kick"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;">
+          <button class="loop-btn" id="loop-kick" onclick="toggleLoop('kick')">⟳ Loop</button>
+          <div class="eq-bars" id="eq-kick">
+            <div class="eq-bar" style="--min:3px;--max:18px;--dur:.3s;"></div>
+            <div class="eq-bar" style="--min:6px;--max:30px;--dur:.4s;"></div>
+            <div class="eq-bar" style="--min:2px;--max:22px;--dur:.35s;"></div>
+            <div class="eq-bar" style="--min:8px;--max:26px;--dur:.45s;"></div>
+            <div class="eq-bar" style="--min:3px;--max:15px;--dur:.28s;"></div>
+            <div class="eq-bar" style="--min:5px;--max:32px;--dur:.38s;"></div>
+            <div class="eq-bar" style="--min:4px;--max:20px;--dur:.33s;"></div>
+            <div class="eq-bar" style="--min:2px;--max:14px;--dur:.42s;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <audio id="audio-kick" src="audio/house_kick.mp3"></audio>
+  </div>
+
+  <!-- ══ SLIDE 7: BASS ══ -->
+  <div class="slide" id="slide-7">
+    <div class="label">Instrument 02</div>
+    <div class="title glow-cyan" style="font-size:clamp(64px,12vw,140px);">THE<br>BASS</div>
+    <p class="body-text" style="margin-top:20px;">
+      The <span class="accent2">bass line</span> is the groove carrier. Whether it's a rolling sub, a
+      <span class="accent2">TB-303 acid line</span>, or a deep synth bass, it locks in with the kick
+      and gives the track its irresistible forward motion.
+    </p>
+    <div class="player-wrap">
+      <div class="player player-cyan" id="player-bass">
+        <div class="player-top">
+          <button class="play-btn" onclick="togglePlay('bass')" style="color:#000;">▶</button>
+          <div class="player-info">
+            <div class="player-name">Bass Line</div>
+            <div class="player-time" id="time-bass">0:00 / 0:00</div>
+          </div>
+        </div>
+        <div class="progress-wrap" onclick="seek('bass', event)">
+          <div class="progress-fill" id="fill-bass"></div>
+          <div class="progress-thumb" id="thumb-bass"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;">
+          <button class="loop-btn" id="loop-bass" onclick="toggleLoop('bass')">⟳ Loop</button>
+          <div class="eq-bars" id="eq-bass">
+            <div class="eq-bar" style="--min:8px;--max:36px;--dur:.5s;"></div>
+            <div class="eq-bar" style="--min:5px;--max:28px;--dur:.4s;"></div>
+            <div class="eq-bar" style="--min:10px;--max:38px;--dur:.55s;"></div>
+            <div class="eq-bar" style="--min:4px;--max:22px;--dur:.35s;"></div>
+            <div class="eq-bar" style="--min:6px;--max:32px;--dur:.48s;"></div>
+            <div class="eq-bar" style="--min:3px;--max:18px;--dur:.42s;"></div>
+            <div class="eq-bar" style="--min:7px;--max:30px;--dur:.38s;"></div>
+            <div class="eq-bar" style="--min:5px;--max:24px;--dur:.45s;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <audio id="audio-bass" src="audio/bass.mp3"></audio>
+  </div>
+
+  <!-- ══ SLIDE 8: LEAD ══ -->
+  <div class="slide" id="slide-8">
+    <div class="label">Instrument 03</div>
+    <div class="title glow-yellow" style="font-size:clamp(64px,12vw,140px);">THE<br>LEAD</div>
+    <p class="body-text" style="margin-top:20px;">
+      The <span class="accent4">lead synth</span> is the voice of the track — the melody, stab, or chord
+      progression that hooks you in. In house, leads often use <span class="accent4">Juno pads</span>,
+      piano chords, or plucky arp sequences to create emotional contrast with the driving rhythm.
+    </p>
+    <div class="player-wrap">
+      <div class="player player-yellow" id="player-lead">
+        <div class="player-top">
+          <button class="play-btn" onclick="togglePlay('lead')" style="color:#000;">▶</button>
+          <div class="player-info">
+            <div class="player-name">Lead Synth</div>
+            <div class="player-time" id="time-lead">0:00 / 0:00</div>
+          </div>
+        </div>
+        <div class="progress-wrap" onclick="seek('lead', event)">
+          <div class="progress-fill" id="fill-lead"></div>
+          <div class="progress-thumb" id="thumb-lead"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;">
+          <button class="loop-btn" id="loop-lead" onclick="toggleLoop('lead')">⟳ Loop</button>
+          <div class="eq-bars" id="eq-lead">
+            <div class="eq-bar" style="--min:4px;--max:24px;--dur:.36s;"></div>
+            <div class="eq-bar" style="--min:6px;--max:34px;--dur:.44s;"></div>
+            <div class="eq-bar" style="--min:2px;--max:16px;--dur:.3s;"></div>
+            <div class="eq-bar" style="--min:8px;--max:38px;--dur:.52s;"></div>
+            <div class="eq-bar" style="--min:4px;--max:20px;--dur:.38s;"></div>
+            <div class="eq-bar" style="--min:10px;--max:32px;--dur:.46s;"></div>
+            <div class="eq-bar" style="--min:3px;--max:18px;--dur:.34s;"></div>
+            <div class="eq-bar" style="--min:5px;--max:28px;--dur:.4s;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <audio id="audio-lead" src="audio/lead_1.mp3"></audio>
+  </div>
+
+  <!-- ══ SLIDE 9: FULL TRACK ══ -->
+  <div class="slide" id="slide-9">
+    <div class="label">All Together Now</div>
+    <div class="title glow-purple" style="font-size:clamp(48px,8vw,100px);">THE FULL<br><span style="color:var(--neon-pink);" class="glow-pink">TRACK</span></div>
+    <p class="body-text" style="margin-top:16px;">
+      Kick + Bass + Lead = <span class="accent3">House Music.</span> This is what it sounds like
+      when all the elements lock together and the room starts moving.
+    </p>
+    <div class="player-wrap" style="max-width:600px;">
+      <div class="player player-purple" id="player-track">
+        <div class="player-top">
+          <button class="play-btn" onclick="togglePlay('track')">▶</button>
+          <div class="player-info">
+            <div class="player-name">Full Track</div>
+            <div class="player-time" id="time-track">0:00 / 0:00</div>
+          </div>
+        </div>
+        <div class="progress-wrap" onclick="seek('track', event)">
+          <div class="progress-fill" id="fill-track"></div>
+          <div class="progress-thumb" id="thumb-track"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;">
+          <button class="loop-btn" id="loop-track" onclick="toggleLoop('track')">⟳ Loop</button>
+          <div class="eq-bars" id="eq-track">
+            <div class="eq-bar" style="--min:6px;--max:34px;--dur:.4s;"></div>
+            <div class="eq-bar" style="--min:10px;--max:38px;--dur:.5s;"></div>
+            <div class="eq-bar" style="--min:4px;--max:26px;--dur:.36s;"></div>
+            <div class="eq-bar" style="--min:8px;--max:36px;--dur:.44s;"></div>
+            <div class="eq-bar" style="--min:3px;--max:20px;--dur:.32s;"></div>
+            <div class="eq-bar" style="--min:7px;--max:30px;--dur:.48s;"></div>
+            <div class="eq-bar" style="--min:5px;--max:24px;--dur:.38s;"></div>
+            <div class="eq-bar" style="--min:9px;--max:34px;--dur:.42s;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <audio id="audio-track" src="audio/track_for_slides.mp3"></audio>
+  </div>
+
+  <!-- ══ SLIDE 10: OUTRO ══ -->
+  <div class="slide" id="slide-10">
+    <div class="big-emoji">🏠</div>
+    <div class="label">That's House Music</div>
+    <div class="title glow-cyan" style="font-size:clamp(52px,9vw,110px);">FEEL THE<br><span class="accent glow-pink">GROOVE</span></div>
+    <p class="body-text" style="margin-top:20px;">
+      Simple elements. Infinite variations. One purpose —
+      <span class="accent2">to make people dance.</span>
+    </p>
+    <div class="tags" style="margin-top:32px;">
+      <span class="tag tag-pink">Chicago</span>
+      <span class="tag tag-cyan">Soul</span>
+      <span class="tag tag-purple">Funk</span>
+      <span class="tag tag-yellow">Electronic</span>
+      <span class="tag tag-pink">Disco</span>
+      <span class="tag tag-cyan">Forever</span>
+    </div>
+  </div>
+
+</div><!-- /slideshow -->
+
+<!-- NAV ARROWS -->
+<button class="nav-arrow" id="prev-btn" onclick="navigate(-1)" aria-label="Previous">
+  <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+    <circle cx="16" cy="16" r="15" stroke="rgba(255,255,255,.2)" stroke-width="1.5"/>
+    <path d="M19 10L13 16L19 22" stroke="rgba(255,255,255,.7)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>
+</button>
+<button class="nav-arrow" id="next-btn" onclick="navigate(1)" aria-label="Next">
+  <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+    <circle cx="16" cy="16" r="15" stroke="rgba(255,255,255,.2)" stroke-width="1.5"/>
+    <path d="M13 10L19 16L13 22" stroke="rgba(255,255,255,.7)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>
+</button>
+
+<!-- DOTS -->
+<div id="dots"></div>
+
+<!-- COUNTER -->
+<div id="slide-counter">01 / 10</div>
+
+<!-- KEY HINT -->
+<div id="key-hint">← → arrow keys to navigate</div>
+
+<script>
+  const TOTAL = 10;
+  let current = 0;
+  let transitioning = false;
+
+  /* ── build dots ── */
+  const dotsEl = document.getElementById('dots');
+  for (let i = 0; i < TOTAL; i++) {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i === 0 ? ' active' : '');
+    d.onclick = () => goTo(i);
+    dotsEl.appendChild(d);
+  }
+
+  function updateUI() {
+    document.querySelectorAll('.dot').forEach((d, i) => {
+      d.classList.toggle('active', i === current);
+    });
+    document.getElementById('slide-counter').textContent =
+      String(current + 1).padStart(2, '0') + ' / ' + String(TOTAL).padStart(2, '0');
+    document.getElementById('prev-btn').style.opacity = current === 0 ? '.2' : '1';
+    document.getElementById('next-btn').style.opacity = current === TOTAL - 1 ? '.2' : '1';
+  }
+
+  function goTo(idx) {
+    if (transitioning || idx === current) return;
+    if (idx < 0 || idx >= TOTAL) return;
+    transitioning = true;
+
+    const slides = document.querySelectorAll('.slide');
+    const dir = idx > current ? 'left' : 'right';
+
+    slides[current].classList.add('exit-' + dir);
+    slides[current].classList.remove('active');
+
+    current = idx;
+
+    slides[current].style.transform = dir === 'left' ? 'translateX(60px)' : 'translateX(-60px)';
+    slides[current].classList.add('active');
+
+    /* force reflow then remove inline transform so CSS transition plays */
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        slides[current].style.transform = '';
+        updateUI();
+      });
+    });
+
+    setTimeout(() => {
+      document.querySelectorAll('.slide').forEach(s => s.classList.remove('exit-left', 'exit-right'));
+      transitioning = false;
+    }, 520);
+  }
+
+  function navigate(dir) { goTo(current + dir); }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight') navigate(1);
+    if (e.key === 'ArrowLeft')  navigate(-1);
+  });
+
+  /* ═══ AUDIO PLAYERS ═══ */
+  const tracks = {
+    kick:  { audio: null, loop: false },
+    bass:  { audio: null, loop: false },
+    lead:  { audio: null, loop: false },
+    track: { audio: null, loop: false },
+  };
+
+  function initAudio(id) {
+    if (tracks[id].audio) return;
+    tracks[id].audio = document.getElementById('audio-' + id);
+    const a = tracks[id].audio;
+
+    a.addEventListener('timeupdate', () => updateProgress(id));
+    a.addEventListener('loadedmetadata', () => updateProgress(id));
+    a.addEventListener('ended', () => {
+      if (tracks[id].loop) { a.currentTime = 0; a.play(); }
+      else { resetPlayer(id); }
+    });
+  }
+
+  function fmtTime(s) {
+    if (isNaN(s)) return '0:00';
+    const m = Math.floor(s / 60), sec = Math.floor(s % 60);
+    return m + ':' + String(sec).padStart(2, '0');
+  }
+
+  function updateProgress(id) {
+    const a = tracks[id].audio;
+    const pct = a.duration ? (a.currentTime / a.duration) * 100 : 0;
+    document.getElementById('fill-' + id).style.width = pct + '%';
+    document.getElementById('thumb-' + id).style.left = pct + '%';
+    document.getElementById('time-' + id).textContent =
+      fmtTime(a.currentTime) + ' / ' + fmtTime(a.duration);
+  }
+
+  function resetPlayer(id) {
+    const btn = document.querySelector('#player-' + id + ' .play-btn');
+    btn.textContent = '▶';
+    document.getElementById('eq-' + id).classList.remove('playing');
+  }
+
+  function togglePlay(id) {
+    initAudio(id);
+    const a = tracks[id].audio;
+    const btn = document.querySelector('#player-' + id + ' .play-btn');
+    const eq  = document.getElementById('eq-' + id);
+
+    if (a.paused) {
+      /* pause all others */
+      Object.keys(tracks).forEach(k => {
+        if (k !== id && tracks[k].audio && !tracks[k].audio.paused) {
+          tracks[k].audio.pause();
+          resetPlayer(k);
+        }
+      });
+      a.play();
+      btn.textContent = '⏸';
+      eq.classList.add('playing');
+    } else {
+      a.pause();
+      btn.textContent = '▶';
+      eq.classList.remove('playing');
+    }
+  }
+
+  function seek(id, e) {
+    initAudio(id);
+    const a = tracks[id].audio;
+    if (!a.duration) return;
+    const bar = e.currentTarget;
+    const rect = bar.getBoundingClientRect();
+    const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    a.currentTime = pct * a.duration;
+  }
+
+  function toggleLoop(id) {
+    tracks[id].loop = !tracks[id].loop;
+    const btn = document.getElementById('loop-' + id);
+    btn.classList.toggle('on', tracks[id].loop);
+    btn.textContent = tracks[id].loop ? '⟳ Looping' : '⟳ Loop';
+  }
+
+  updateUI();
+</script>
+</body>
+</html>
