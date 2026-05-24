@@ -729,8 +729,28 @@
     </div>
   </div>
 
-  <!-- 9 · FULL TRACK -->
+  <!-- 9 · OUTRO -->
   <div class="slide" id="s9">
+    <div class="center">
+      <div class="over anim"><span class="over-dot"></span>End of presentation</div>
+      <div class="disp anim">Feel The<br><span class="amb">Groove</span></div>
+      <div class="outro-line anim"></div>
+      <p class="body anim" style="text-align:center;max-width:380px;">
+        House music is more than a genre. It is a community, a feeling, a shared moment between strangers on a dancefloor.
+      </p>
+      <div class="tags c anim">
+        <span class="tag">Chicago</span>
+        <span class="tag">Soul</span>
+        <span class="tag">Funk</span>
+        <span class="tag">Electronic</span>
+        <span class="tag">Forever</span>
+      </div>
+      <div class="anim" style="margin-top:28px;font-family:'DM Mono',monospace;font-size:10px;color:var(--cr20);letter-spacing:5px;">1980 — ∞</div>
+    </div>
+  </div>
+
+  <!-- 10 · FULL TRACK -->
+  <div class="slide" id="s10">
     <div class="center">
       <div class="over anim"><span class="over-dot"></span>Death of the World — Full Track</div>
       <div class="disp-sm anim">All <span class="amb">Together</span></div>
@@ -758,33 +778,13 @@
     </div>
   </div>
 
-  <!-- 10 · OUTRO -->
-  <div class="slide" id="s10">
-    <div class="center">
-      <div class="over anim"><span class="over-dot"></span>End of presentation</div>
-      <div class="disp anim">Feel The<br><span class="amb">Groove</span></div>
-      <div class="outro-line anim"></div>
-      <p class="body anim" style="text-align:center;max-width:380px;">
-        House music is more than a genre. It is a community, a feeling, a shared moment between strangers on a dancefloor.
-      </p>
-      <div class="tags c anim">
-        <span class="tag">Chicago</span>
-        <span class="tag">Soul</span>
-        <span class="tag">Funk</span>
-        <span class="tag">Electronic</span>
-        <span class="tag">Forever</span>
-      </div>
-      <div class="anim" style="margin-top:28px;font-family:'DM Mono',monospace;font-size:10px;color:var(--cr20);letter-spacing:5px;">1980 — ∞</div>
-    </div>
-  </div>
-
   <!-- 11 · PEDALBOARD -->
   <div class="slide" id="s11">
     <div class="center">
       <div class="over anim"><span class="over-dot"></span>Live Mix</div>
       <div class="disp-sm anim">The <span class="amb">Pedalboard</span></div>
       <div class="rule rule-c anim"></div>
-      <p class="body anim" style="text-align:center;max-width:460px;">All three tracks playing together, locked and looped. Tap any channel to mute and unmute.</p>
+      <p class="body anim" style="text-align:center;max-width:460px;">Kick and bass playing together, locked and looped. Tap any channel to mute and unmute.</p>
       <div class="pb-board anim">
 
         <div class="pb-strip" id="pb-strip-kick">
@@ -807,18 +807,6 @@
           <div class="pb-sep"></div>
           <button class="pb-stomp" id="pb-btn-bass" onclick="pbMute('bass')">
             <div class="pb-led" id="pb-led-bass"></div>
-            <div class="pb-stomp-txt">LIVE</div>
-          </button>
-        </div>
-
-        <div class="pb-strip" id="pb-strip-lead">
-          <div class="pb-ch-label">LEAD</div>
-          <div class="pb-sub">Serum Arp</div>
-          <div class="pb-meter" id="pb-vu-lead"></div>
-          <canvas class="pb-waveform" id="pb-wv-lead" height="38"></canvas>
-          <div class="pb-sep"></div>
-          <button class="pb-stomp" id="pb-btn-lead" onclick="pbMute('lead')">
-            <div class="pb-led" id="pb-led-lead"></div>
             <div class="pb-stomp-txt">LIVE</div>
           </button>
         </div>
@@ -1002,7 +990,7 @@ function drawBg() {
 
   if (pbActive) {
     /* ── PEDALBOARD: beat ring + per-channel VU/waveform ── */
-    ['kick', 'bass', 'lead'].forEach(id => {
+    ['kick', 'bass'].forEach(id => {
       const pb = PB[id];
       if (!pb?.analyser) return;
       pb.analyser.getByteFrequencyData(pb.freq);
@@ -1332,12 +1320,12 @@ async function startPedalboard() {
   lastBeatIdx = -1;
 
   /* load all three buffers in parallel */
-  await Promise.all(['kick', 'bass', 'lead'].map(id => loadBuf(id)));
+  await Promise.all(['kick', 'bass'].map(id => loadBuf(id)));
 
   const ctx  = getCtx();
   const when = ctx.currentTime + 0.04; /* slight future for sync */
 
-  ['kick', 'bass', 'lead'].forEach(id => {
+  ['kick', 'bass'].forEach(id => {
     /* tear down any existing PB source */
     if (PB[id].source) { try { PB[id].source.stop(); } catch (_) {} PB[id].source = null; }
 
@@ -1370,14 +1358,14 @@ async function startPedalboard() {
 }
 
 function stopPedalboard() {
-  ['kick', 'bass', 'lead'].forEach(id => {
+  ['kick', 'bass'].forEach(id => {
     if (PB[id].source) {
       try { PB[id].source.stop(); } catch (_) {}
       PB[id].source = null;
     }
   });
   /* clear PB VU */
-  ['kick', 'bass', 'lead'].forEach(id => {
+  ['kick', 'bass'].forEach(id => {
     document.querySelectorAll('#pb-vu-' + id + ' .pb-mb').forEach(b => {
       b.style.height = '2px'; b.style.background = 'var(--s3)';
     });
