@@ -936,6 +936,8 @@ const PCNT = 55;
 const pts = [];
 for (let i = 0; i < PCNT; i++) pts.push(mkPt());
 
+let pbActive = false; /* declared here so drawBg can reference it immediately */
+
 function mkPt() {
   return {
     x: Math.random() * (W || window.innerWidth),
@@ -1305,7 +1307,6 @@ function drawWave(id, timeData) {
    PEDALBOARD ENGINE
 ════════════════════════════════════════════════════ */
 const PB_VU_BARS = 18;
-let pbActive = false;
 
 const PB = {
   kick: { source: null, gain: null, analyser: null, freq: null, time: null, startAt: 0, muted: false },
