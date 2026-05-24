@@ -839,18 +839,38 @@ function mkPt() {
   };
 }
 
-/* — rings — */
-const rings = [];
-let lastBeat   = 0;
-let beatPulse  = 0;   /* 0..1, set to 1 on kick, decays each frame */
-let lastFrameT = performance.now();
+/* — beat rings — exact position-based, 130 BPM — */
+const BEAT_MS  = (60 / 130) * 1000;   /* 461.54 ms */
+const beatRings = [];
+let lastBeatIdx = -1;
 
-function spawnRing(str, x, y) {
-  const cx2 = x ?? W / 2, cy2 = y ?? H / 2;
-  rings.push({ x: cx2, y: cy2, r: 16, maxR: 220 + str * 180, op: str * .5 + .18, spd: 2.4 + str * 3.2 });
+function checkBeatRing() {
+  if (!activeId || !ST[activeId]?.source) return;
+  const pos      = getCurrentPos(activeId) * 1000; /* ms */
+  const beatIdx  = Math.floor(pos / BEAT_MS);
+  if (beatIdx !== lastBeatIdx) {
+    lastBeatIdx = beatIdx;
+    beatRings.push({ spawnedAt: performance.now() });
+  }
 }
 
-/* — ambient slow grid lines — */
+function drawBeatRings() {
+  const now   = performance.now();
+  const maxR  = Math.min(W, H) * 0.46;
+  for (let i = beatRings.length - 1; i >= 0; i--) {
+    const t = (now - beatRings[i].spawnedAt) / BEAT_MS; /* 0..1 over one beat */
+    if (t >= 1) { beatRings.splice(i, 1); continue; }
+    const r  = maxR * t;
+    const op = (1 - t) * 0.75;
+    cx.beginPath();
+    cx.arc(W / 2, H / 2, r, 0, Math.PI * 2);
+    cx.strokeStyle = `rgba(192,128,48,${op})`;
+    cx.lineWidth   = 2.5 - t * 1.5;
+    cx.stroke();
+  }
+}
+
+/* — ambient grid offset — */
 let gridOffset = 0;
 
 /* — main loop — */
@@ -858,148 +878,51 @@ let activeId = null;
 
 function drawBg() {
   requestAnimationFrame(drawBg);
-
-  /* time-accurate beat pulse decay */
-  const now2   = performance.now();
-  const dt     = Math.min(now2 - lastFrameT, 50);
-  lastFrameT   = now2;
-  beatPulse   *= Math.pow(0.82, dt / 16.667); /* ~60fps normalized */
-
   cx.clearRect(0, 0, W, H);
 
-  /* beat bloom — radial amber glow from centre */
-  if (beatPulse > 0.01) {
-    const grd = cx.createRadialGradient(W/2, H/2, 0, W/2, H/2, Math.min(W, H) * 0.7);
-    grd.addColorStop(0,   `rgba(192,128,48,${beatPulse * 0.18})`);
-    grd.addColorStop(0.5, `rgba(192,96,32,${beatPulse * 0.06})`);
-    grd.addColorStop(1,   'rgba(0,0,0,0)');
-    cx.fillStyle = grd;
-    cx.fillRect(0, 0, W, H);
-  }
+  const playing = !!(activeId && ST[activeId]?.source);
 
-  /* slow scrolling grid — brightens on beat */
-  gridOffset = (gridOffset + .12) % 60;
-  const gAlpha = 0.03 + beatPulse * 0.09;
-  cx.strokeStyle = `rgba(192,128,48,${gAlpha})`;
-  cx.lineWidth = 1;
-  for (let y = gridOffset; y < H; y += 60) {
-    cx.beginPath(); cx.moveTo(0, y); cx.lineTo(W, y); cx.stroke();
-  }
-  for (let x = 0; x < W; x += 80) {
-    cx.beginPath(); cx.moveTo(x, 0); cx.lineTo(x, H); cx.stroke();
-  }
-
-  let bass = 0, energy = 0, freqData = null;
-
-  if (activeId && ST[activeId]?.loaded) {
-    const td = ST[activeId];
-    td.analyser.getByteFrequencyData(td.freq);
-    td.analyser.getByteTimeDomainData(td.time);
-    freqData = td.freq;
-    updateProg(activeId, getCurrentPos(activeId));
-
-    /* kick band: bins 1–5 (~20–100 Hz at fftSize=256/sampleRate=44100) */
-    let kickSum = 0;
-    for (let i = 1; i <= 5; i++) kickSum += freqData[i];
-    bass = kickSum / (5 * 255);
-
-    /* broader bass for particles */
-    let bSum = 0, bN = Math.floor(freqData.length * .08);
-    for (let i = 0; i < bN; i++) bSum += freqData[i];
-    const broadBass = bSum / (bN * 255);
-
-    /* total energy */
-    let eSum = 0;
-    for (let i = 0; i < freqData.length; i++) eSum += freqData[i];
-    energy = eSum / (freqData.length * 255);
-
-    /* beat detection — 130 BPM = 461ms/beat, guard 370ms */
-    const now = performance.now();
-    if (bass > .42 && now - lastBeat > 370) {
-      lastBeat  = now;
-      beatPulse = 1.0;
-      /* primary ring */
-      spawnRing(bass);
-      /* secondary ring — slightly smaller, offset spawn */
-      setTimeout(() => spawnRing(bass * .65), 60);
+  if (playing) {
+    /* ── PLAYING: static dark bg + beat ring only ── */
+    /* pull analyser data for VU / waveform */
+    if (ST[activeId]?.loaded) {
+      const td = ST[activeId];
+      td.analyser.getByteFrequencyData(td.freq);
+      td.analyser.getByteTimeDomainData(td.time);
+      updateProg(activeId, getCurrentPos(activeId));
+      updateVU(activeId, td.freq);
+      drawWave(activeId, td.time);
     }
+    checkBeatRing();
+    drawBeatRings();
 
-    /* background spectrum — log-scale, full width, bottom — boosted on beat */
-    const bBars = 100, bW = W / bBars, maxBin = freqData.length - 1;
-    for (let i = 0; i < bBars; i++) {
-      const bin = Math.round(Math.pow(maxBin, i / (bBars - 1)));
-      const v   = freqData[Math.min(bin, maxBin)] / 255;
-      const bH  = v * H * (.38 + beatPulse * .18);
-      const t   = i / (bBars - 1);
-      const rr  = Math.round(180 + t * 50);
-      const gg  = Math.round(110 + t * 80);
-      cx.fillStyle = `rgba(${rr},${gg},48,${.05 + v * .18 + beatPulse * .06})`;
-      cx.fillRect(i * bW, H - bH, bW - 1, bH);
+  } else {
+    /* ── IDLE: ambient particles + slow grid ── */
+    gridOffset = (gridOffset + .12) % 60;
+    cx.strokeStyle = 'rgba(192,128,48,.03)';
+    cx.lineWidth = 1;
+    for (let y = gridOffset; y < H; y += 60) {
+      cx.beginPath(); cx.moveTo(0, y); cx.lineTo(W, y); cx.stroke();
     }
-    /* top mirrored */
-    for (let i = 0; i < bBars; i++) {
-      const bin = Math.round(Math.pow(maxBin, i / (bBars - 1)));
-      const v   = freqData[Math.min(bin, maxBin)] / 255;
-      const bH  = v * H * (.16 + beatPulse * .08);
-      const t   = i / (bBars - 1);
-      const rr  = Math.round(180 + t * 50);
-      const gg  = Math.round(110 + t * 80);
-      cx.fillStyle = `rgba(${rr},${gg},48,${.02 + v * .07 + beatPulse * .03})`;
-      cx.fillRect(i * bW, 0, bW - 1, bH);
+    for (let x = 0; x < W; x += 80) {
+      cx.beginPath(); cx.moveTo(x, 0); cx.lineTo(x, H); cx.stroke();
     }
-
-    /* vertical energy flash lines on beat */
-    if (beatPulse > 0.3) {
-      const nLines = 6;
-      for (let i = 0; i < nLines; i++) {
-        const lx = (i / (nLines - 1)) * W;
-        cx.beginPath();
-        cx.moveTo(lx, H);
-        cx.lineTo(lx, H * (1 - broadBass * (.5 + beatPulse * .5)));
-        cx.strokeStyle = `rgba(220,160,60,${beatPulse * 0.12})`;
-        cx.lineWidth = 1;
-        cx.stroke();
-      }
-    }
+    pts.forEach(p => {
+      p.ph += .008;
+      p.x  += p.vx + Math.sin(p.ph) * .15;
+      p.y  += p.vy + Math.cos(p.ph * .8) * .15;
+      p.r   = p.br;
+      if (p.x < -10) p.x = W + 10;
+      if (p.x > W + 10) p.x = -10;
+      if (p.y < -10) p.y = H + 10;
+      if (p.y > H + 10) p.y = -10;
+      cx.beginPath();
+      cx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      cx.fillStyle = `rgba(192,128,48,${p.op})`;
+      cx.fill();
+    });
   }
-
-  /* rings */
-  for (let i = rings.length - 1; i >= 0; i--) {
-    const rg = rings[i];
-    rg.r  += rg.spd;
-    rg.op *= .958;
-    if (rg.op < .004 || rg.r > rg.maxR) { rings.splice(i, 1); continue; }
-    cx.beginPath();
-    cx.arc(rg.x, rg.y, rg.r, 0, Math.PI * 2);
-    cx.strokeStyle = `rgba(192,128,48,${rg.op})`;
-    cx.lineWidth = 1.5;
-    cx.stroke();
-  }
-
-  /* particles — size & speed throb to kick */
-  pts.forEach(p => {
-    p.ph += .008;
-    const boost = 1 + energy * 2.2 + beatPulse * 2.5;
-    p.x += p.vx * boost + Math.sin(p.ph) * .15;
-    p.y += p.vy * boost + Math.cos(p.ph * .8) * .15;
-    p.r  = p.br * (1 + bass * 2.5 + beatPulse * 6);
-    if (p.x < -10) p.x = W + 10;
-    if (p.x > W + 10) p.x = -10;
-    if (p.y < -10) p.y = H + 10;
-    if (p.y > H + 10) p.y = -10;
-    cx.beginPath();
-    cx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-    cx.fillStyle = `rgba(192,128,48,${p.op * (1 + energy * .7 + beatPulse * .6)})`;
-    cx.fill();
-  });
-
-  /* waveform canvases */
-  if (activeId && ST[activeId]?.loaded) {
-    drawWave(activeId, ST[activeId].time);
-  }
-
-  /* VU bars */
-  if (activeId && freqData) updateVU(activeId, freqData);
+}
 }
 
 drawBg();
@@ -1137,6 +1060,7 @@ async function tplay(id) {
     });
     setBtn(id, true);       /* show pause icon immediately */
     await loadBuf(id);      /* no-op if already loaded */
+    lastBeatIdx = -1;       /* reset so ring fires on first beat */
     startSource(id, s.pauseAt);
     activeId = id;
   }
