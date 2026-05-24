@@ -377,6 +377,62 @@
       background: linear-gradient(to bottom, transparent, var(--amb), transparent);
       margin: 22px auto;
     }
+
+    /* ── pedalboard ── */
+    .pb-board {
+      display: flex; gap: 20px; margin-top: 28px; justify-content: center;
+    }
+    .pb-strip {
+      background: var(--s1);
+      border: 1px solid var(--bd);
+      border-radius: 14px;
+      padding: 22px 16px 26px;
+      width: 210px;
+      display: flex; flex-direction: column; align-items: center; gap: 12px;
+      transition: opacity .3s, border-color .3s;
+      box-shadow: 0 16px 48px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.04);
+    }
+    .pb-strip.muted { opacity: .28; border-color: rgba(255,255,255,.03); }
+    .pb-ch-label {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 30px; letter-spacing: 3px; color: var(--cr); line-height: 1;
+    }
+    .pb-sub {
+      font-size: 9px; letter-spacing: 3px; text-transform: uppercase;
+      color: var(--cr20); margin-top: -8px;
+    }
+    .pb-meter {
+      display: flex; align-items: flex-end; gap: 2px;
+      height: 90px; width: 100%;
+    }
+    .pb-mb {
+      flex: 1; border-radius: 1px;
+      background: var(--s3); height: 2px; min-height: 2px;
+    }
+    .pb-waveform { width: 100%; height: 38px; border-radius: 4px; display: block; }
+    .pb-sep { width: 100%; height: 1px; background: var(--bd); }
+    .pb-stomp {
+      width: 68px; height: 68px; border-radius: 50%;
+      border: 2px solid var(--amb-bd);
+      background: var(--s2);
+      cursor: pointer;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px;
+      transition: border-color .15s, box-shadow .15s, background .15s;
+      box-shadow: 0 4px 16px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.06);
+    }
+    .pb-stomp:hover { border-color: var(--amb); background: var(--s3); }
+    .pb-stomp:active { transform: scale(.94); }
+    .pb-led {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: var(--amb);
+      box-shadow: 0 0 8px var(--amb), 0 0 18px rgba(192,128,48,.5);
+      transition: background .2s, box-shadow .2s;
+    }
+    .pb-strip.muted .pb-led { background: rgba(255,255,255,.08); box-shadow: none; }
+    .pb-stomp-txt {
+      font-family: 'DM Mono', monospace; font-size: 8px;
+      letter-spacing: 2px; text-transform: uppercase; color: var(--cr20);
+    }
   </style>
 </head>
 <body>
@@ -722,8 +778,57 @@
     </div>
   </div>
 
-  <!-- 11 · THANK YOU -->
+  <!-- 11 · PEDALBOARD -->
   <div class="slide" id="s11">
+    <div class="center">
+      <div class="over anim"><span class="over-dot"></span>Live Mix</div>
+      <div class="disp-sm anim">The <span class="amb">Pedalboard</span></div>
+      <div class="rule rule-c anim"></div>
+      <p class="body anim" style="text-align:center;max-width:460px;">All three tracks playing together, locked and looped. Tap any channel to mute and unmute.</p>
+      <div class="pb-board anim">
+
+        <div class="pb-strip" id="pb-strip-kick">
+          <div class="pb-ch-label">KICK</div>
+          <div class="pb-sub">Bass Drum</div>
+          <div class="pb-meter" id="pb-vu-kick"></div>
+          <canvas class="pb-waveform" id="pb-wv-kick" height="38"></canvas>
+          <div class="pb-sep"></div>
+          <button class="pb-stomp" id="pb-btn-kick" onclick="pbMute('kick')">
+            <div class="pb-led" id="pb-led-kick"></div>
+            <div class="pb-stomp-txt">LIVE</div>
+          </button>
+        </div>
+
+        <div class="pb-strip" id="pb-strip-bass">
+          <div class="pb-ch-label">BASS</div>
+          <div class="pb-sub">Pluck + Saw</div>
+          <div class="pb-meter" id="pb-vu-bass"></div>
+          <canvas class="pb-waveform" id="pb-wv-bass" height="38"></canvas>
+          <div class="pb-sep"></div>
+          <button class="pb-stomp" id="pb-btn-bass" onclick="pbMute('bass')">
+            <div class="pb-led" id="pb-led-bass"></div>
+            <div class="pb-stomp-txt">LIVE</div>
+          </button>
+        </div>
+
+        <div class="pb-strip" id="pb-strip-lead">
+          <div class="pb-ch-label">LEAD</div>
+          <div class="pb-sub">Serum Arp</div>
+          <div class="pb-meter" id="pb-vu-lead"></div>
+          <canvas class="pb-waveform" id="pb-wv-lead" height="38"></canvas>
+          <div class="pb-sep"></div>
+          <button class="pb-stomp" id="pb-btn-lead" onclick="pbMute('lead')">
+            <div class="pb-led" id="pb-led-lead"></div>
+            <div class="pb-stomp-txt">LIVE</div>
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- 12 · THANK YOU -->
+  <div class="slide" id="s12">
     <div class="center">
       <div class="over anim"><span class="over-dot"></span>Wells</div>
       <div class="disp anim" style="font-size:clamp(60px,11vw,130px);line-height:.88;">THANK<br><span class="amb">YOU</span></div>
@@ -757,14 +862,15 @@
   </svg>
 </button>
 <div id="dots"></div>
-<div id="cnt">01 / 11</div>
+<div id="cnt">01 / 12</div>
 <div id="hint">← → to navigate</div>
 
 <script>
 /* ════════════════════════════════════════════════════
    SLIDES
 ════════════════════════════════════════════════════ */
-const TOTAL = 11;
+const TOTAL = 12;
+const PB_SLIDE = 10; /* 0-based index of pedalboard slide */
 let cur = 0, busy = false;
 
 const dotsEl = document.getElementById('dots');
@@ -786,6 +892,7 @@ function refreshUI() {
 function goTo(idx) {
   if (busy || idx === cur || idx < 0 || idx >= TOTAL) return;
   busy = true;
+  const prev = cur;
   const slides = document.querySelectorAll('.slide');
   const dir = idx > cur ? 'ex-l' : 'ex-r';
   slides[cur].classList.add(dir);
@@ -794,6 +901,9 @@ function goTo(idx) {
   slides[cur].classList.add('active');
   slides[cur].classList.remove('ex-l', 'ex-r');
   refreshUI();
+  /* pedalboard lifecycle */
+  if (idx === PB_SLIDE) startPedalboard();
+  if (prev === PB_SLIDE) stopPedalboard();
   setTimeout(() => {
     document.querySelectorAll('.slide').forEach(s => s.classList.remove('ex-l', 'ex-r'));
     busy = false;
@@ -845,9 +955,15 @@ const beatRings = [];
 let lastBeatIdx = -1;
 
 function checkBeatRing() {
-  if (!activeId || !ST[activeId]?.source) return;
-  const pos      = getCurrentPos(activeId) * 1000; /* ms */
-  const beatIdx  = Math.floor(pos / BEAT_MS);
+  let posMs;
+  if (pbActive && PB.kick?.source) {
+    const elapsed = getCtx().currentTime - PB.kick.startAt;
+    posMs = Math.max(0, elapsed) % ST.kick.buf.duration * 1000;
+  } else if (activeId && ST[activeId]?.source) {
+    posMs = getCurrentPos(activeId) * 1000;
+  } else return;
+
+  const beatIdx = Math.floor(posMs / BEAT_MS);
   if (beatIdx !== lastBeatIdx) {
     lastBeatIdx = beatIdx;
     beatRings.push({ spawnedAt: performance.now() });
@@ -882,9 +998,21 @@ function drawBg() {
 
   const playing = !!(activeId && ST[activeId]?.source);
 
-  if (playing) {
-    /* ── PLAYING: static dark bg + beat ring only ── */
-    /* pull analyser data for VU / waveform */
+  if (pbActive) {
+    /* ── PEDALBOARD: beat ring + per-channel VU/waveform ── */
+    ['kick', 'bass', 'lead'].forEach(id => {
+      const pb = PB[id];
+      if (!pb?.analyser) return;
+      pb.analyser.getByteFrequencyData(pb.freq);
+      pb.analyser.getByteTimeDomainData(pb.time);
+      updatePBVU(id, pb.freq);
+      drawPBWave(id, pb.time);
+    });
+    checkBeatRing();
+    drawBeatRings();
+
+  } else if (playing) {
+    /* ── SINGLE PLAYER: static dark bg + beat ring only ── */
     if (ST[activeId]?.loaded) {
       const td = ST[activeId];
       td.analyser.getByteFrequencyData(td.freq);
@@ -1170,6 +1298,136 @@ function drawWave(id, timeData) {
   /* fill under */
   c2.lineTo(w, h); c2.lineTo(0, h); c2.closePath();
   c2.fillStyle = 'rgba(192,128,48,.06)';
+  c2.fill();
+}
+
+/* ════════════════════════════════════════════════════
+   PEDALBOARD ENGINE
+════════════════════════════════════════════════════ */
+const PB_VU_BARS = 18;
+let pbActive = false;
+
+const PB = {
+  kick: { source: null, gain: null, analyser: null, freq: null, time: null, startAt: 0, muted: false },
+  bass: { source: null, gain: null, analyser: null, freq: null, time: null, startAt: 0, muted: false },
+  lead: { source: null, gain: null, analyser: null, freq: null, time: null, startAt: 0, muted: false },
+};
+
+/* build PB VU bar elements */
+['kick', 'bass', 'lead'].forEach(id => {
+  const wrap = document.getElementById('pb-vu-' + id);
+  if (!wrap) return;
+  for (let i = 0; i < PB_VU_BARS; i++) {
+    const b = document.createElement('div'); b.className = 'pb-mb'; wrap.appendChild(b);
+  }
+});
+
+async function startPedalboard() {
+  /* stop any single-player track */
+  IDS.forEach(id => {
+    if (ST[id].source) { stopSource(id); setBtn(id, false); clearVU(id); }
+  });
+  activeId = null;
+  lastBeatIdx = -1;
+
+  /* load all three buffers in parallel */
+  await Promise.all(['kick', 'bass', 'lead'].map(id => loadBuf(id)));
+
+  const ctx  = getCtx();
+  const when = ctx.currentTime + 0.04; /* slight future for sync */
+
+  ['kick', 'bass', 'lead'].forEach(id => {
+    /* tear down any existing PB source */
+    if (PB[id].source) { try { PB[id].source.stop(); } catch (_) {} PB[id].source = null; }
+
+    const src = ctx.createBufferSource();
+    const gn  = ctx.createGain();
+    const an  = ctx.createAnalyser();
+    an.fftSize = 256; an.smoothingTimeConstant = .82;
+
+    src.buffer    = ST[id].buf;
+    src.loop      = true;
+    src.loopStart = 0;
+    src.loopEnd   = ST[id].buf.duration;
+
+    src.connect(an);
+    an.connect(gn);
+    gn.connect(ctx.destination);
+    gn.gain.setValueAtTime(PB[id].muted ? 0 : 1, when);
+
+    src.start(when, 0);
+
+    PB[id].source  = src;
+    PB[id].gain    = gn;
+    PB[id].analyser = an;
+    PB[id].freq    = new Uint8Array(an.frequencyBinCount);
+    PB[id].time    = new Uint8Array(an.fftSize);
+    PB[id].startAt = when;
+  });
+
+  pbActive = true;
+}
+
+function stopPedalboard() {
+  ['kick', 'bass', 'lead'].forEach(id => {
+    if (PB[id].source) {
+      try { PB[id].source.stop(); } catch (_) {}
+      PB[id].source = null;
+    }
+  });
+  /* clear PB VU */
+  ['kick', 'bass', 'lead'].forEach(id => {
+    document.querySelectorAll('#pb-vu-' + id + ' .pb-mb').forEach(b => {
+      b.style.height = '2px'; b.style.background = 'var(--s3)';
+    });
+  });
+  pbActive = false;
+}
+
+function pbMute(id) {
+  PB[id].muted = !PB[id].muted;
+  const on = !PB[id].muted;
+  if (PB[id].gain) PB[id].gain.gain.setValueAtTime(on ? 1 : 0, getCtx().currentTime);
+  document.getElementById('pb-strip-' + id).classList.toggle('muted', !on);
+  document.getElementById('pb-btn-'   + id).querySelector('.pb-stomp-txt').textContent = on ? 'LIVE' : 'MUTE';
+}
+
+function updatePBVU(id, data) {
+  const bars = document.querySelectorAll('#pb-vu-' + id + ' .pb-mb');
+  if (!bars.length) return;
+  const n = bars.length, maxBin = data.length - 1;
+  bars.forEach((bar, i) => {
+    const bin = Math.round(Math.pow(maxBin, i / (n - 1)));
+    const v   = data[Math.min(bin, maxBin)] / 255;
+    const h   = Math.max(2, v * 88);
+    bar.style.height = h + 'px';
+    if (v > .9)       bar.style.background = '#e03010';
+    else if (i < n * .35) bar.style.background = '#b87028';
+    else if (i < n * .65) bar.style.background = '#d09030';
+    else                   bar.style.background = '#e8c060';
+  });
+}
+
+function drawPBWave(id, timeData) {
+  const cv = document.getElementById('pb-wv-' + id);
+  if (!cv) return;
+  const c2 = cv.getContext('2d');
+  const w  = cv.offsetWidth;
+  const h  = cv.height;
+  if (cv.width !== w) cv.width = w;
+  c2.clearRect(0, 0, w, h);
+  c2.beginPath();
+  const sl = timeData.length / w;
+  for (let i = 0; i < w; i++) {
+    const v = (timeData[Math.floor(i * sl)] / 128) - 1;
+    const y = v * h * .42 + h / 2;
+    i === 0 ? c2.moveTo(i, y) : c2.lineTo(i, y);
+  }
+  c2.strokeStyle = 'rgba(192,128,48,.65)';
+  c2.lineWidth = 1;
+  c2.stroke();
+  c2.lineTo(w, h); c2.lineTo(0, h); c2.closePath();
+  c2.fillStyle = 'rgba(192,128,48,.05)';
   c2.fill();
 }
 </script>
