@@ -869,11 +869,12 @@ function drawBg() {
 
   let bass = 0, energy = 0, freqData = null;
 
-  if (activeId && TD[activeId]) {
-    const td = TD[activeId];
+  if (activeId && ST[activeId]?.loaded) {
+    const td = ST[activeId];
     td.analyser.getByteFrequencyData(td.freq);
     td.analyser.getByteTimeDomainData(td.time);
     freqData = td.freq;
+    updateProg(activeId, getCurrentPos(activeId));
 
     /* bass energy (low bins) */
     let bSum = 0, bN = Math.floor(freqData.length * .06);
@@ -953,8 +954,8 @@ function drawBg() {
   });
 
   /* waveform canvases */
-  if (activeId && TD[activeId]) {
-    drawWave(activeId, TD[activeId].time);
+  if (activeId && ST[activeId]?.loaded) {
+    drawWave(activeId, ST[activeId].time);
   }
 
   /* VU bars */
@@ -964,21 +965,40 @@ function drawBg() {
 drawBg();
 
 /* ════════════════════════════════════════════════════
-   AUDIO ENGINE
+   AUDIO ENGINE — AudioBufferSourceNode (gapless loop)
+   Looping happens inside the Web Audio engine at the
+   sample level — no JS round-trip, no gap ever.
 ════════════════════════════════════════════════════ */
 let actx = null;
-const TD = {};  /* track data keyed by id */
 
-const IDS = ['kick', 'bass', 'lead', 'track'];
+const FILES = {
+  kick:  'audio/house_kick.mp3',
+  bass:  'audio/bass.mp3',
+  lead:  'audio/lead_1.mp3',
+  track: 'audio/track_for_slides.mp3'
+};
+
+const IDS     = ['kick', 'bass', 'lead', 'track'];
 const VU_BARS = 22;
 
+/* per-track state */
+const ST = {};
 IDS.forEach(id => {
+  ST[id] = {
+    buf: null, analyser: null, freq: null, time: null,
+    source: null,
+    startAt: 0,   /* actx.currentTime when play started (minus offset) */
+    pauseAt: 0,   /* position to resume from, seconds */
+    loop: false,
+    loaded: false, loading: false
+  };
+  /* VU bar elements */
   const wrap = document.getElementById('vu-' + id);
   for (let i = 0; i < VU_BARS; i++) {
-    const b = document.createElement('div');
-    b.className = 'vb';
-    wrap.appendChild(b);
+    const b = document.createElement('div'); b.className = 'vb'; wrap.appendChild(b);
   }
+  /* seek on progress bar click */
+  document.getElementById('pg-' + id).addEventListener('click', e => seekTrack(id, e));
 });
 
 function getCtx() {
@@ -987,51 +1007,141 @@ function getCtx() {
   return actx;
 }
 
-function setupTrack(id) {
-  if (TD[id]) return;
+/* fetch → decode into AudioBuffer once, reuse forever */
+async function loadBuf(id) {
+  const s = ST[id];
+  if (s.loaded) return;
+  if (s.loading) {
+    await new Promise(res => {
+      const t = setInterval(() => { if (s.loaded) { clearInterval(t); res(); } }, 30);
+    });
+    return;
+  }
+  s.loading = true;
+  const ctx  = getCtx();
+  const ab   = await (await fetch(FILES[id])).arrayBuffer();
+  s.buf      = await ctx.decodeAudioData(ab);
+  /* persistent analyser node — reused across every play/loop */
+  s.analyser = ctx.createAnalyser();
+  s.analyser.fftSize = 256;
+  s.analyser.smoothingTimeConstant = .82;
+  s.analyser.connect(ctx.destination);
+  s.freq  = new Uint8Array(s.analyser.frequencyBinCount);
+  s.time  = new Uint8Array(s.analyser.fftSize);
+  s.loaded  = true;
+  s.loading = false;
+}
+
+/* create a new BufferSourceNode and start it — called on play and after seek */
+function startSource(id, offset) {
+  const s   = ST[id];
   const ctx = getCtx();
-  const el  = document.getElementById('a-' + id);
-  const src = ctx.createMediaElementSource(el);
-  const an  = ctx.createAnalyser();
-  an.fftSize = 256;
-  an.smoothingTimeConstant = .82;
-  src.connect(an);
-  an.connect(ctx.destination);
-  TD[id] = {
-    analyser: an,
-    freq: new Uint8Array(an.frequencyBinCount),
-    time: new Uint8Array(an.fftSize),
-    loop: false
+  const src = ctx.createBufferSource();
+  src.buffer    = s.buf;
+  src.loop      = s.loop;
+  src.loopStart = 0;
+  src.loopEnd   = s.buf.duration;
+  src.connect(s.analyser);
+  const safeOff = offset % s.buf.duration;
+  src.start(0, safeOff);
+  s.source  = src;
+  s.startAt = ctx.currentTime - safeOff;
+
+  src.onended = () => {
+    /* only fires when loop=false and track reaches end */
+    if (activeId === id && !s.loop) {
+      s.source  = null;
+      s.pauseAt = 0;
+      setBtn(id, false);
+      clearVU(id);
+      activeId = null;
+    }
   };
 }
 
-function tplay(id) {
-  setupTrack(id);
-  const el = document.getElementById('a-' + id);
-  const btn = document.getElementById('b-' + id);
+function stopSource(id) {
+  const s = ST[id];
+  if (!s.source) return;
+  try { s.source.stop(); } catch (_) {}
+  s.source = null;
+}
 
-  if (el.paused) {
-    /* stop others */
-    IDS.forEach(k => {
-      if (k !== id) {
-        const oe = document.getElementById('a-' + k);
-        if (!oe.paused) {
-          oe.pause();
-          setBtn(k, false);
-          clearVU(k);
-          if (activeId === k) activeId = null;
-        }
-      }
-    });
-    el.play();
-    setBtn(id, true);
-    activeId = id;
-  } else {
-    el.pause();
+/* current playback position in seconds, wraps correctly when looping */
+function getCurrentPos(id) {
+  const s = ST[id];
+  if (!s.loaded) return 0;
+  if (!s.source) return s.pauseAt;
+  const elapsed = getCtx().currentTime - s.startAt;
+  return s.loop ? elapsed % s.buf.duration : Math.min(elapsed, s.buf.duration);
+}
+
+async function tplay(id) {
+  const s         = ST[id];
+  const isPlaying = !!s.source;
+
+  if (isPlaying) {
+    s.pauseAt = getCurrentPos(id);
+    stopSource(id);
     setBtn(id, false);
     clearVU(id);
     activeId = null;
+  } else {
+    /* stop any other playing track */
+    IDS.forEach(k => {
+      if (k !== id && ST[k].source) {
+        ST[k].pauseAt = getCurrentPos(k);
+        stopSource(k);
+        setBtn(k, false);
+        clearVU(k);
+      }
+    });
+    setBtn(id, true);       /* show pause icon immediately */
+    await loadBuf(id);      /* no-op if already loaded */
+    startSource(id, s.pauseAt);
+    activeId = id;
   }
+}
+
+function tloop(id) {
+  const s    = ST[id];
+  s.loop     = !s.loop;
+  const btn  = document.getElementById('lp-' + id);
+  btn.classList.toggle('on', s.loop);
+  btn.textContent = s.loop ? 'Looping' : 'Loop';
+  /* if currently playing, hot-swap the source so loop takes effect instantly */
+  if (s.source) {
+    const pos = getCurrentPos(id);
+    stopSource(id);
+    startSource(id, pos);
+  }
+}
+
+function seekTrack(id, e) {
+  const s = ST[id];
+  if (!s.loaded) return;
+  const r   = e.currentTarget.getBoundingClientRect();
+  const pct = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width));
+  const pos = pct * s.buf.duration;
+  const was = !!s.source;
+  if (was) stopSource(id);
+  s.pauseAt = pos;
+  if (was) startSource(id, pos);
+  updateProg(id, pos);
+}
+
+function fmt(s) {
+  if (!s || isNaN(s)) return '0:00';
+  return Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0');
+}
+
+function updateProg(id, pos) {
+  const s = ST[id];
+  if (!s.loaded) return;
+  const dur = s.buf.duration;
+  const pct = (pos / dur) * 100;
+  document.getElementById('f-'  + id).style.width = pct + '%';
+  document.getElementById('th-' + id).style.left  = pct + '%';
+  document.getElementById('t-'  + id).textContent = fmt(pos) + ' / ' + fmt(dur);
 }
 
 function setBtn(id, playing) {
@@ -1043,49 +1153,6 @@ function setBtn(id, playing) {
     btn.classList.remove('on');
     btn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>`;
   }
-}
-
-function tloop(id) {
-  if (!TD[id]) setupTrack(id);
-  TD[id].loop = !TD[id].loop;
-  document.getElementById('lp-' + id).classList.toggle('on', TD[id].loop);
-  document.getElementById('lp-' + id).textContent = TD[id].loop ? 'Looping' : 'Loop';
-  document.getElementById('a-' + id).loop = TD[id].loop;
-}
-
-IDS.forEach(id => {
-  const el = document.getElementById('a-' + id);
-  el.addEventListener('timeupdate', () => updateProg(id));
-  el.addEventListener('loadedmetadata', () => updateProg(id));
-  el.addEventListener('ended', () => {
-    if (!TD[id] || !TD[id].loop) {
-      setBtn(id, false);
-      clearVU(id);
-      if (activeId === id) activeId = null;
-    }
-  });
-
-  /* seek */
-  document.getElementById('pg-' + id).addEventListener('click', e => {
-    if (TD[id]) {
-      const el2 = document.getElementById('a-' + id);
-      const r = e.currentTarget.getBoundingClientRect();
-      el2.currentTime = ((e.clientX - r.left) / r.width) * el2.duration;
-    }
-  });
-});
-
-function fmt(s) {
-  if (!s || isNaN(s)) return '0:00';
-  return Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0');
-}
-
-function updateProg(id) {
-  const el  = document.getElementById('a-' + id);
-  const pct = el.duration ? el.currentTime / el.duration * 100 : 0;
-  document.getElementById('f-'  + id).style.width = pct + '%';
-  document.getElementById('th-' + id).style.left  = pct + '%';
-  document.getElementById('t-'  + id).textContent = fmt(el.currentTime) + ' / ' + fmt(el.duration);
 }
 
 /* ── VU bars — logarithmic frequency mapping, bass left → highs right ── */
