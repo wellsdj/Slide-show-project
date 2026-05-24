@@ -729,57 +729,7 @@
     </div>
   </div>
 
-  <!-- 9 · OUTRO -->
   <div class="slide" id="s9">
-    <div class="center">
-      <div class="over anim"><span class="over-dot"></span>End of presentation</div>
-      <div class="disp anim">Feel The<br><span class="amb">Groove</span></div>
-      <div class="outro-line anim"></div>
-      <p class="body anim" style="text-align:center;max-width:380px;">
-        House music is more than a genre. It is a community, a feeling, a shared moment between strangers on a dancefloor.
-      </p>
-      <div class="tags c anim">
-        <span class="tag">Chicago</span>
-        <span class="tag">Soul</span>
-        <span class="tag">Funk</span>
-        <span class="tag">Electronic</span>
-        <span class="tag">Forever</span>
-      </div>
-      <div class="anim" style="margin-top:28px;font-family:'DM Mono',monospace;font-size:10px;color:var(--cr20);letter-spacing:5px;">1980 — ∞</div>
-    </div>
-  </div>
-
-  <!-- 10 · FULL TRACK -->
-  <div class="slide" id="s10">
-    <div class="center">
-      <div class="over anim"><span class="over-dot"></span>Death of the World — Full Track</div>
-      <div class="disp-sm anim">All <span class="amb">Together</span></div>
-      <div class="rule rule-c anim"></div>
-      <p class="body anim" style="text-align:center;margin-bottom:28px;">Kick driving the floor. Bass plucking and pumping. Lead arpeggiated and reverb-washed. All three sidechained into one locked groove — this is what the dancefloor hears.</p>
-      <div class="hwp anim" id="hwp-track" style="max-width:540px;">
-        <div class="hwp-head">
-          <span class="hwp-name">Death of the World</span>
-          <span class="hwp-time" id="t-track">0:00 / 0:00</span>
-        </div>
-        <div class="hwp-prog" id="pg-track">
-          <div class="hwp-fill" id="f-track"></div>
-          <div class="hwp-thumb" id="th-track"></div>
-        </div>
-        <div class="hwp-ctrl">
-          <button class="hwp-btn" id="b-track" onclick="tplay('track')">
-            <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-          </button>
-          <div class="vu-wrap"><div class="vu" id="vu-track"></div><div class="vu-band-labels"><span>BASS</span><span>MIDS</span><span>HIGHS</span></div></div>
-          <button class="hwp-loop" id="lp-track" onclick="tloop('track')">Loop</button>
-        </div>
-        <canvas class="hwp-wave" id="wv-track" height="32"></canvas>
-      </div>
-      <audio id="a-track" src="audio/track_for_slides.mp3" crossorigin="anonymous"></audio>
-    </div>
-  </div>
-
-  <!-- 11 · PEDALBOARD -->
-  <div class="slide" id="s11">
     <div class="center">
       <div class="over anim"><span class="over-dot"></span>Live Mix</div>
       <div class="disp-sm anim">The <span class="amb">Pedalboard</span></div>
@@ -815,8 +765,37 @@
     </div>
   </div>
 
-  <!-- 12 · THANK YOU -->
-  <div class="slide" id="s12">
+  <!-- 10 · FULL TRACK -->
+  <div class="slide" id="s10">
+    <div class="center">
+      <div class="over anim"><span class="over-dot"></span>Death of the World — Full Track</div>
+      <div class="disp-sm anim">All <span class="amb">Together</span></div>
+      <div class="rule rule-c anim"></div>
+      <p class="body anim" style="text-align:center;margin-bottom:28px;">Kick driving the floor. Bass plucking and pumping. Lead arpeggiated and reverb-washed. All three sidechained into one locked groove — this is what the dancefloor hears.</p>
+      <div class="hwp anim" id="hwp-track" style="max-width:540px;">
+        <div class="hwp-head">
+          <span class="hwp-name">Death of the World</span>
+          <span class="hwp-time" id="t-track">0:00 / 0:00</span>
+        </div>
+        <div class="hwp-prog" id="pg-track">
+          <div class="hwp-fill" id="f-track"></div>
+          <div class="hwp-thumb" id="th-track"></div>
+        </div>
+        <div class="hwp-ctrl">
+          <button class="hwp-btn" id="b-track" onclick="tplay('track')">
+            <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+          </button>
+          <div class="vu-wrap"><div class="vu" id="vu-track"></div><div class="vu-band-labels"><span>BASS</span><span>MIDS</span><span>HIGHS</span></div></div>
+          <button class="hwp-loop" id="lp-track" onclick="tloop('track')">Loop</button>
+        </div>
+        <canvas class="hwp-wave" id="wv-track" height="32"></canvas>
+      </div>
+      <audio id="a-track" src="audio/track_for_slides.mp3" crossorigin="anonymous"></audio>
+    </div>
+  </div>
+
+  <!-- 11 · THANK YOU -->
+  <div class="slide" id="s11">
     <div class="center">
       <div class="over anim"><span class="over-dot"></span>Wells</div>
       <div class="disp anim" style="font-size:clamp(60px,11vw,130px);line-height:.88;">THANK<br><span class="amb">YOU</span></div>
@@ -850,15 +829,15 @@
   </svg>
 </button>
 <div id="dots"></div>
-<div id="cnt">01 / 12</div>
+<div id="cnt">01 / 11</div>
 <div id="hint">← → to navigate</div>
 
 <script>
 /* ════════════════════════════════════════════════════
    SLIDES
 ════════════════════════════════════════════════════ */
-const TOTAL = 12;
-const PB_SLIDE = 10; /* 0-based index of pedalboard slide */
+const TOTAL = 11;
+const PB_SLIDE = 8; /* 0-based index of pedalboard slide */
 let cur = 0, busy = false;
 
 const dotsEl = document.getElementById('dots');
