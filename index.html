@@ -335,7 +335,7 @@
     .hwp-btn.on path, .hwp-btn.on rect { fill: var(--bg); }
 
     /* VU bars — heights driven by JS */
-    .vu { flex: 1; display: flex; align-items: flex-end; gap: 2px; height: 36px; }
+    .vu { display: flex; align-items: flex-end; gap: 2px; height: 36px; }
     .vb {
       flex: 1; border-radius: 1px;
       background: var(--s3);
@@ -348,6 +348,17 @@
       width: 100%; height: 32px; border-radius: 4px;
       margin-top: 12px; display: block;
       opacity: .7;
+    }
+
+    /* freq band labels under VU */
+    .vu-wrap {
+      flex: 1; display: flex; flex-direction: column; gap: 3px;
+    }
+    .vu-band-labels {
+      display: flex; justify-content: space-between;
+      font-family: 'DM Mono', monospace;
+      font-size: 7px; letter-spacing: 1px; text-transform: uppercase;
+      color: rgba(237,224,200,.18);
     }
 
     .hwp-loop {
@@ -426,11 +437,39 @@
     </div>
   </div>
 
-  <!-- 3 · HISTORY -->
+  <!-- 3 · STRUCTURE (swapped) -->
   <div class="slide" id="s3">
+    <div class="center">
+      <div class="over anim"><span class="over-dot"></span>Chapter 02</div>
+      <div class="disp-sm anim">The <span class="amb">Building Blocks</span></div>
+      <div class="rule rule-c anim"></div>
+      <p class="body anim" style="text-align:center;">House music is deceptively simple. Four elements stacked on a relentless grid.</p>
+      <div class="struct-grid anim">
+        <div class="sc">
+          <div class="sc-top"><div class="sc-ico">●</div><div class="sc-name">Kick Drum</div></div>
+          <div class="sc-desc">Hits on every beat — 1, 2, 3, 4. The four-on-the-floor foundation. Sampled from the Roland TR-909 or TR-808.</div>
+        </div>
+        <div class="sc">
+          <div class="sc-top"><div class="sc-ico">◆</div><div class="sc-name">Bass Line</div></div>
+          <div class="sc-desc">Synth bass or TB-303 acid line. Locks in with the kick and provides the groove architecture the body craves.</div>
+        </div>
+        <div class="sc">
+          <div class="sc-top"><div class="sc-ico">▲</div><div class="sc-name">Lead / Melody</div></div>
+          <div class="sc-desc">Piano stabs, Juno pads, plucked arps. The emotional layer — the voice that makes a track memorable.</div>
+        </div>
+        <div class="sc">
+          <div class="sc-top"><div class="sc-ico">✦</div><div class="sc-name">The Mix</div></div>
+          <div class="sc-desc">Hi-hats, claps, vocal chops, effects. The texture that elevates raw elements into a finished, dynamic track.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4 · HISTORY (swapped) -->
+  <div class="slide" id="s4">
     <div class="split">
       <div class="col">
-        <div class="over anim"><span class="over-dot"></span>Chapter 02</div>
+        <div class="over anim"><span class="over-dot"></span>Chapter 03</div>
         <div class="disp-sm anim">The<br><span class="amb">History</span></div>
         <div class="rule anim"></div>
         <p class="body anim">
@@ -472,34 +511,6 @@
               <span>Tech house, melodic house, afro house — the four-on-the-floor keeps mutating.</span>
             </div>
           </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- 4 · STRUCTURE -->
-  <div class="slide" id="s4">
-    <div class="center">
-      <div class="over anim"><span class="over-dot"></span>Chapter 03</div>
-      <div class="disp-sm anim">The <span class="amb">Building Blocks</span></div>
-      <div class="rule rule-c anim"></div>
-      <p class="body anim" style="text-align:center;">House music is deceptively simple. Four elements stacked on a relentless grid.</p>
-      <div class="struct-grid anim">
-        <div class="sc">
-          <div class="sc-top"><div class="sc-ico">●</div><div class="sc-name">Kick Drum</div></div>
-          <div class="sc-desc">Hits on every beat — 1, 2, 3, 4. The four-on-the-floor foundation. Sampled from the Roland TR-909 or TR-808.</div>
-        </div>
-        <div class="sc">
-          <div class="sc-top"><div class="sc-ico">◆</div><div class="sc-name">Bass Line</div></div>
-          <div class="sc-desc">Synth bass or TB-303 acid line. Locks in with the kick and provides the groove architecture the body craves.</div>
-        </div>
-        <div class="sc">
-          <div class="sc-top"><div class="sc-ico">▲</div><div class="sc-name">Lead / Melody</div></div>
-          <div class="sc-desc">Piano stabs, Juno pads, plucked arps. The emotional layer — the voice that makes a track memorable.</div>
-        </div>
-        <div class="sc">
-          <div class="sc-top"><div class="sc-ico">✦</div><div class="sc-name">The Mix</div></div>
-          <div class="sc-desc">Hi-hats, claps, vocal chops, effects. The texture that elevates raw elements into a finished, dynamic track.</div>
         </div>
       </div>
     </div>
@@ -574,7 +585,7 @@
             <button class="hwp-btn" id="b-kick" onclick="tplay('kick')">
               <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
             </button>
-            <div class="vu" id="vu-kick"></div>
+            <div class="vu-wrap"><div class="vu" id="vu-kick"></div><div class="vu-band-labels"><span>BASS</span><span>MIDS</span><span>HIGHS</span></div></div>
             <button class="hwp-loop" id="lp-kick" onclick="tloop('kick')">Loop</button>
           </div>
           <canvas class="hwp-wave" id="wv-kick" height="32"></canvas>
@@ -612,7 +623,7 @@
             <button class="hwp-btn" id="b-bass" onclick="tplay('bass')">
               <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
             </button>
-            <div class="vu" id="vu-bass"></div>
+            <div class="vu-wrap"><div class="vu" id="vu-bass"></div><div class="vu-band-labels"><span>BASS</span><span>MIDS</span><span>HIGHS</span></div></div>
             <button class="hwp-loop" id="lp-bass" onclick="tloop('bass')">Loop</button>
           </div>
           <canvas class="hwp-wave" id="wv-bass" height="32"></canvas>
@@ -650,7 +661,7 @@
             <button class="hwp-btn" id="b-lead" onclick="tplay('lead')">
               <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
             </button>
-            <div class="vu" id="vu-lead"></div>
+            <div class="vu-wrap"><div class="vu" id="vu-lead"></div><div class="vu-band-labels"><span>BASS</span><span>MIDS</span><span>HIGHS</span></div></div>
             <button class="hwp-loop" id="lp-lead" onclick="tloop('lead')">Loop</button>
           </div>
           <canvas class="hwp-wave" id="wv-lead" height="32"></canvas>
@@ -680,7 +691,7 @@
           <button class="hwp-btn" id="b-track" onclick="tplay('track')">
             <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
           </button>
-          <div class="vu" id="vu-track"></div>
+          <div class="vu-wrap"><div class="vu" id="vu-track"></div><div class="vu-band-labels"><span>BASS</span><span>MIDS</span><span>HIGHS</span></div></div>
           <button class="hwp-loop" id="lp-track" onclick="tloop('track')">Loop</button>
         </div>
         <canvas class="hwp-wave" id="wv-track" height="32"></canvas>
@@ -859,23 +870,32 @@ function drawBg() {
       spawnRing(bass);
     }
 
-    /* background spectrum — bottom */
-    const bBars = 90;
+    /* background spectrum — log-scale, full width, bottom */
+    const bBars = 100;
     const bW = W / bBars;
-    const step = Math.floor(freqData.length / bBars);
+    const maxBin = freqData.length - 1;
     for (let i = 0; i < bBars; i++) {
-      const v = freqData[i * step] / 255;
-      const bH = v * H * .28;
-      const alpha = .03 + v * .09;
-      cx.fillStyle = `rgba(192,128,48,${alpha})`;
+      const bin = Math.round(Math.pow(maxBin, i / (bBars - 1)));
+      const v   = freqData[Math.min(bin, maxBin)] / 255;
+      const bH  = v * H * .38;
+      const t   = i / (bBars - 1);
+      /* bass=amber, highs=bright gold */
+      const rr = Math.round(180 + t * 50);
+      const gg = Math.round(110 + t * 80);
+      const alpha = .05 + v * .18;
+      cx.fillStyle = `rgba(${rr},${gg},48,${alpha})`;
       cx.fillRect(i * bW, H - bH, bW - 1, bH);
     }
 
-    /* top mirrored spectrum */
+    /* top mirrored spectrum (subtler) */
     for (let i = 0; i < bBars; i++) {
-      const v = freqData[i * step] / 255;
-      const bH = v * H * .14;
-      cx.fillStyle = `rgba(192,128,48,${.015 + v * .04})`;
+      const bin = Math.round(Math.pow(maxBin, i / (bBars - 1)));
+      const v   = freqData[Math.min(bin, maxBin)] / 255;
+      const bH  = v * H * .16;
+      const t   = i / (bBars - 1);
+      const rr  = Math.round(180 + t * 50);
+      const gg  = Math.round(110 + t * 80);
+      cx.fillStyle = `rgba(${rr},${gg},48,${.02 + v * .07})`;
       cx.fillRect(i * bW, 0, bW - 1, bH);
     }
   }
@@ -1046,19 +1066,24 @@ function updateProg(id) {
   document.getElementById('t-'  + id).textContent = fmt(el.currentTime) + ' / ' + fmt(el.duration);
 }
 
-/* ── VU bars (real frequency data) ── */
+/* ── VU bars — logarithmic frequency mapping, bass left → highs right ── */
 function updateVU(id, data) {
   const bars = document.querySelectorAll('#vu-' + id + ' .vb');
   if (!bars.length) return;
-  const step = Math.floor(data.length / bars.length);
+  const n = bars.length;
+  const maxBin = data.length - 1;
   bars.forEach((bar, i) => {
-    const v = data[i * step] / 255;
-    const h = Math.max(2, v * 34);
+    /* log-scale: more bars covering audible bass range, fewer for highs */
+    const bin = Math.round(Math.pow(maxBin, i / (n - 1)));
+    const v   = data[Math.min(bin, maxBin)] / 255;
+    const h   = Math.max(2, v * 34);
     bar.style.height = h + 'px';
-    /* colour: amber low → bright → red clip */
-    if (v > .88)      bar.style.background = '#e04010';
-    else if (v > .6)  bar.style.background = '#e09840';
-    else              bar.style.background = '#c08030';
+    const t = i / (n - 1); /* 0=bass … 1=highs */
+    /* clipping red > bright gold mids > deep amber bass */
+    if (v > .9)        bar.style.background = '#e03010';
+    else if (t < .35)  bar.style.background = '#b87028'; /* deep amber — bass */
+    else if (t < .65)  bar.style.background = '#d09030'; /* mid amber — mids */
+    else               bar.style.background = '#e8c060'; /* bright gold — highs */
   });
 }
 
